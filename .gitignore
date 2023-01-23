@@ -1,3 +1,5 @@
+ogm_groups/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
