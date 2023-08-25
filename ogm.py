@@ -42,7 +42,7 @@ def get_OGM_grouping(hamil: QubitOperator):
 
 
 if __name__ == '__main__':
-    from mizore.testing.hamil import get_test_hamil
+    from hamil import get_test_hamil
     from average_var import average_var_coeff_by_list_of_pwords
     hamil = get_test_hamil("mol", "LiH_12_JW")
     op = get_OGM_grouping(hamil)
