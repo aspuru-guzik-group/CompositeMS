@@ -1,0 +1,58 @@
+{
+  "N2_20_JW": {
+    "bi-level rescale": 810.7144165039062,
+    "bi-level": 954.908203125,
+    "rescale": 807.2913818359375,
+    "nothing": 824.5505981445312,
+    "more-bi-level rescale": 811.2994995117188
+  },
+  "C2H2_24_JW": {
+    "bi-level rescale": 580.4057006835938,
+    "bi-level": 718.2373046875,
+    "rescale": 592.2991943359375,
+    "nothing": 606.42724609375,
+    "more-bi-level rescale": 579.3013305664062
+  },
+  "C2H4_28_JW": {
+    "bi-level rescale": 927.6632690429688,
+    "bi-level": 935.2376098632812,
+    "rescale": 944.6471557617188,
+    "nothing": 977.0337524414062,
+    "more-bi-level rescale": 923.1879272460938
+  },
+  "CO2_30_JW": {
+    "bi-level rescale": 2335.35205078125,
+    "bi-level": 2345.7568359375,
+    "rescale": 2335.088623046875,
+    "nothing": 2378.988037109375,
+    "more-bi-level rescale": 2328.242919921875
+  },
+  "H_chain-H6_12_JW": {
+    "bi-level rescale": 25.76378059387207,
+    "bi-level": 25.59050941467285,
+    "rescale": 25.35214614868164,
+    "nothing": 25.670883178710938,
+    "more-bi-level rescale": 24.904842376708984
+  },
+  "H_chain-H8_16_JW": {
+    "bi-level rescale": 87.58124542236328,
+    "bi-level": 83.70645141601562,
+    "rescale": 88.76025390625,
+    "nothing": 91.52471923828125,
+    "more-bi-level rescale": 82.32532501220703
+  },
+  "H_chain-H10_20_JW": {
+    "bi-level rescale": 226.4821014404297,
+    "bi-level": 221.75502014160156,
+    "rescale": 229.1470947265625,
+    "nothing": 251.40872192382812,
+    "more-bi-level rescale": 217.02264404296875
+  },
+  "H_chain-H12_24_JW": {
+    "bi-level rescale": 496.4568176269531,
+    "bi-level": 500.80316162109375,
+    "rescale": 520.9588012695312,
+    "nothing": 581.089111328125,
+    "more-bi-level rescale": 492.807373046875
+  }
+}

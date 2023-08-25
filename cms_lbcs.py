@@ -9,8 +9,8 @@ if torch.cuda.is_available():
     device = torch.device('cuda')
 
 # torch.manual_seed(3123)  # See https://arxiv.org/abs/2109.08203
-torch.manual_seed(0)
 
+dtype = torch.float32
 
 class LargeLBCS(nn.Module):
     def __init__(self, init_head_ratios, init_heads, freeze_heads = False):
@@ -59,6 +59,20 @@ def loss(heads, head_ratios, no_zero_pauliwords, coeffs):
     var = torch.sum(1.0 / coverage * (coeffs ** 2))
     return var
 
+def get_variance_by_batches(heads, head_ratios, no_zero_pauliwords, coeffs, batch_size):
+    loss_list = []
+    batch_n = 0
+    #coeffs = torch.tensor(coeffs,)
+    while True:
+        batch_pauli_tensor = no_zero_pauliwords[batch_n:batch_n + batch_size]
+        batch_coeffs = coeffs[batch_n:batch_n + batch_size]
+        loss_val = loss(heads, head_ratios, batch_pauli_tensor, batch_coeffs)
+        loss_list.append(loss_val.detach().cpu())
+        if batch_n + batch_size >= len(no_zero_pauliwords):
+            break
+        batch_n += batch_size
+    return sum(loss_list)
+
 
 class CMS_LBCS_args:
     def __init__(self, terminate_loss=-1, multi_GPU=False) -> None:
@@ -87,20 +101,30 @@ class CMS_LBCS_args:
 
         self.freeze_heads = False
 
+
+        self.alternate_training_ratio = -1
+        self.alternate_training_n_steps = -1
+
+        self.ratio_adam_beta_1 = 0.9
+
     def set_init_heads(self, head_ratios, heads):
         self.head_ratios = head_ratios
         self.heads = heads
         self.head_from_args = True
+
+
 
 def train_cms_lbcs(n_head, hamil, batch_size, args=None):
 
     if args == None:
         args = CMS_LBCS_args()
 
+    torch.manual_seed(0)
+
     n_qubit = hamil.n_qubit
     coeffs, pauli_tensor = hamil.get_one_hot_tensor()
-    coeffs = torch.tensor(coeffs)
-    pauli_tensor = torch.tensor(pauli_tensor)
+    coeffs = torch.tensor(coeffs, dtype=dtype)
+    pauli_tensor = torch.tensor(pauli_tensor, dtype=dtype)
     pauli_tensor = get_no_zero_pauliwords(pauli_tensor)
     pauli_tensor = pauli_tensor.to(device)
     coeffs = coeffs.to(device)
@@ -113,8 +137,8 @@ def train_cms_lbcs(n_head, hamil, batch_size, args=None):
         print("Acutal batch size: ", batch_size)
 
     if args.random_init:
-        head_ratios = (5 + 1 * torch.rand((n_head,))).to(device)
-        heads = (5 + 1 * torch.rand((n_head, n_qubit, 3))).to(device)
+        head_ratios = (1 + 1 * torch.rand((n_head,), dtype=dtype)).to(device)
+        heads = (1 + 1 * torch.rand((n_head, n_qubit, 3), dtype=dtype)).to(device)
 
     if args.head_from_hamil:
         term_rank = torch.argsort(coeffs, descending=True)
@@ -136,10 +160,10 @@ def train_cms_lbcs(n_head, hamil, batch_size, args=None):
             head_ratios_param = param
 
     lr = args.lr
-    lr_ratio = lr * args.bilevel_ratio
+    lr_for_ratios = lr * args.bilevel_ratio
 
-    optimizer = torch.optim.Adam([{"params": [heads_param]}, {"params": [
-                                 head_ratios_param], "lr": lr_ratio}], lr=lr, weight_decay=1e-5)
+    optimizer = torch.optim.Adam([{"params": [heads_param], "lr": lr}, {"params": [
+                                 head_ratios_param], "lr": lr_for_ratios}], weight_decay=1e-5)
 
     n_epoch = 0
     batch_n = 0
@@ -152,6 +176,16 @@ def train_cms_lbcs(n_head, hamil, batch_size, args=None):
 
     with tqdm(range(args.n_step), ncols=100) as pbar:
         for i_step in pbar:
+
+            if args.alternate_training_ratio > 0:
+                divider = i_step % args.alternate_training_n_steps
+                if divider < args.alternate_training_ratio * args.alternate_training_n_steps:
+                    model.heads.requires_grad = True
+                    model.head_ratios.requires_grad = False
+                else:
+                    model.heads.requires_grad = False
+                    model.head_ratios.requires_grad = True
+
             optimizer.zero_grad()
             if batch_n == 0:
                 # Calculate the loss
@@ -229,7 +263,7 @@ def train_cms_lbcs(n_head, hamil, batch_size, args=None):
 
 
 if __name__ == '__main__':
-    from mizore.testing.hamil import get_test_hamil
+    from hamil import get_test_hamil
     mol_name = "H2O_26_JW"
     n_head = 1000
     hamil, _ = get_test_hamil("mol", mol_name).remove_constant()

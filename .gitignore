@@ -1,4 +1,6 @@
 ogm_groups/
+scheme_saved/
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
