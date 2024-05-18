@@ -5,15 +5,15 @@ from time import time
 import torch
 import pickle
 from pathlib import Path
-from hamil import get_test_hamil
+from composite_ms.hamil import get_test_hamil
 
-from average_var import average_var_coeff_by_list_of_pwords, average_var_coeff_by_cms_lbcs
-from qubit_operator import QubitOperator
+from composite_ms.average_var import average_var_coeff_by_list_of_pwords, average_var_coeff_by_cms_lbcs
+from composite_ms.qubit_operator import QubitOperator
 import numpy as np
-from generator_methods import get_uncovered_hamil_part, optimal_mixing_coeff, run_generator_ensuring_covering
-from ogm import get_OGM_grouping
-from cms_lbcs import train_cms_lbcs, CMS_LBCS_args
-from utils import project_root
+from composite_ms.generator_methods import get_uncovered_hamil_part, optimal_mixing_coeff, run_generator_ensuring_covering
+from composite_ms.other_methods.ogm import get_OGM_grouping
+from composite_ms.cms_lbcs import train_cms_lbcs, CMS_LBCS_args
+from utils import project_root, result_root, create_if_not_exist
 
 
 def run_part_of_benchmark(hamil_name, method_name, read_file=False):
@@ -127,6 +127,7 @@ def run_part_of_benchmark(hamil_name, method_name, read_file=False):
 
 
 def run_benchmark(mol_list, method_list):
+    create_if_not_exist(result_root + "/var_vs_methods.json")
     for method in method_list:
         for mol in mol_list:
             for trans in ["BK"]:
@@ -134,19 +135,20 @@ def run_benchmark(mol_list, method_list):
                 print("Working on", mol_name)
                 var_coeff = run_part_of_benchmark(
                     mol_name, method, read_file=False)
-                with open(project_root + "/var_vs_methods.json", "r") as f:
+                with open(result_root + "/var_vs_methods.json", "r") as f:
                     res_dict = defaultdict(lambda: {})
                     res_dict.update(json.load(f))
                 res_dict[mol_name][method] = var_coeff
-                with open(project_root + "/var_vs_methods.json", "w") as f:
+                with open(result_root + "/var_vs_methods.json", "w") as f:
                     json.dump(dict(res_dict), f, indent=1)
 
 def log_time_used(mol_name, method, time_used):
-    with open(project_root + "/time_used.json", "r") as f:
+    create_if_not_exist(result_root + "/time_used.json")
+    with open(result_root + "/time_used.json", "r") as f:
         time_dict = defaultdict(lambda: {})
         time_dict.update(json.load(f))
     time_dict[mol_name][method] = time_used
-    with open(project_root + "/time_used.json", "w") as f:
+    with open(result_root + "/time_used.json", "w") as f:
         json.dump(dict(time_dict), f, indent=1)
 
 full_mol_list = ["LiH_12", "H_chain/H6_12", "H2O_14",

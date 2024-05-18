@@ -1,4 +1,4 @@
-from qubit_operator import QubitOperator
+from composite_ms.qubit_operator import QubitOperator
 from pathlib import Path
 import os
 

@@ -1,12 +1,9 @@
-# %%
 import json
 import math
 import os
-from qubit_operator import QubitOperator
-from utils import project_root
+from utils import result_root, get_ogm_n_heads
 import matplotlib.pyplot as plt
 import numpy as np
-from pylab import rcParams
 
 
 def to_tex_mol_name(hamil_name):
@@ -58,8 +55,7 @@ for i in range(n_hamils):
     curr_ax.set_title(latex_mol_name)
     # heads = -1/heads
     try:
-        OGM_n_head = len(QubitOperator.read_op_file(
-        hamil_name, project_root + "/scheme_saved/OG_not_optimized"))
+        OGM_n_head = get_ogm_n_heads(hamil_name)
         ogm_var = other_method_dict[hamil_name]["SG"]
         curr_ax.axhline(y=ogm_var, color="#b85d3e", linestyle='--', label="SG", linewidth=3)
         curr_ax.axvline(x=OGM_n_head, color='#dfba42', linestyle='--', linewidth=3)
@@ -77,6 +73,6 @@ plt.subplots_adjust(hspace=0.1)
 plt.subplots_adjust(wspace=0.05)
 plt.tight_layout()
 plt.show()
-fig.savefig(project_root + f"/n_scheme_compare.pdf")
+fig.savefig(result_root + f"/n_scheme_compare.pdf")
 
 # %%

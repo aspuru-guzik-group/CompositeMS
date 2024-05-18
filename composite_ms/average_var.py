@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-from cms_lbcs import get_no_zero_pauliwords, get_variance_by_batches, loss, dtype
+from composite_ms.cms_lbcs import get_no_zero_pauliwords, get_variance_by_batches, dtype
 
 def average_var_coeff_by_list_of_pwords(ob, pwords_op, allow_uncovered=False):
     childer_coeffs, children_tensor = ob.get_pauli_tensor()

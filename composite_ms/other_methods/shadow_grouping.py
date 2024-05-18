@@ -1,6 +1,8 @@
-from mizore.operators import QubitOperator
+
 from tqdm import tqdm
 import numpy as np
+
+from composite_ms.qubit_operator import QubitOperator
 
 np.random.seed(0)
 

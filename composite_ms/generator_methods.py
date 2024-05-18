@@ -1,8 +1,9 @@
-from derand import DerandomizationMeasurement
-from shadow_grouping import ShadowGroupingMeasurement
+from composite_ms.other_methods.derand import DerandomizationMeasurement
+from composite_ms.other_methods.shadow_grouping import ShadowGroupingMeasurement
 import numpy as np
-from mizore.operators import QubitOperator
-from average_var import average_var_coeff_by_list_of_pwords
+from composite_ms.average_var import average_var_coeff_by_list_of_pwords
+from composite_ms.qubit_operator import QubitOperator
+
 
 def get_uncovered_hamil_part(hamil, pword_dist):
     term_coeff, term_tensor = hamil.get_pauli_tensor()

@@ -1,8 +1,10 @@
 
 from itertools import chain
-from mizore.operators import QubitOperator
 import numpy as np
 from tqdm import trange
+
+from composite_ms.qubit_operator import QubitOperator
+
 
 def get_OGM_grouping(hamil: QubitOperator):
 
@@ -42,8 +44,8 @@ def get_OGM_grouping(hamil: QubitOperator):
 
 
 if __name__ == '__main__':
-    from hamil import get_test_hamil
-    from average_var import average_var_coeff_by_list_of_pwords
+    from composite_ms.hamil import get_test_hamil
+    from composite_ms.average_var import average_var_coeff_by_list_of_pwords
     hamil = get_test_hamil("mol", "LiH_12_JW")
     op = get_OGM_grouping(hamil)
     print(average_var_coeff_by_list_of_pwords(hamil, op))

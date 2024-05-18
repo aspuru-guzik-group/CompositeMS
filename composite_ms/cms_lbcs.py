@@ -263,7 +263,7 @@ def train_cms_lbcs(n_head, hamil, batch_size, args=None):
 
 
 if __name__ == '__main__':
-    from hamil import get_test_hamil
+    from composite_ms.hamil import get_test_hamil
     mol_name = "H2O_26_JW"
     n_head = 1000
     hamil, _ = get_test_hamil("mol", mol_name).remove_constant()

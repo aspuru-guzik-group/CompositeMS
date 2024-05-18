@@ -1,0 +1,10 @@
+sympy~=1.12
+numpy
+torch
+torchvision
+torchaudio
+tqdm
+wget
+matplotlib
+
+

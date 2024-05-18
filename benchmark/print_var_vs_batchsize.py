@@ -1,6 +1,8 @@
 import json
 import math
-from utils import project_root
+
+from composite_ms.hamil import get_test_hamil
+from utils import result_root
 
 
 def to_tex_mol_name(hamil_name):
@@ -22,30 +24,25 @@ def to_tex_mol_name(hamil_name):
         res.append("}")
     return "$\\mathrm{"+"".join(res)+"}$"
 
-with open(project_root + "/var_vs_optimization.json", "r") as f:
+with open(result_root + "/var_vs_batchsize.json", "r") as f:
     res_dict = json.load(f)
 
 
-method_name_map = {
-    "nothing": "None", 
-    "rescale": "Rescale", 
-    "bi-level": "Bi-level",
-    "bi-level rescale": "Both",
-    "more-bi-level rescale": "Stronger Bi-level"
-}
+def method_name_map(times):
+    return "$1/"+str(times)+"$"
 
-hamil_names = ["N2_20", "C2H2_24", "C2H4_28", "CO2_30", "H_chain/H6_12", "H_chain/H8_16", "H_chain/H10_20", "H_chain/H12_24"]
-methods = ["nothing", "rescale", "bi-level", "bi-level rescale"]
+hamil_names = ["H2O_14", "NH3_16", "N2_20", "C2H2_24", "C2H4_28", "CO2_30"]
+methods = [128, 64, 32]
 
 
 res = []
 res.append("\\begin{table}[!h]\\centering\n\\begin{tabular}")
-res.append("{c|c"+"c"*(len(methods))+"}")
+res.append("{c|c|c"+"c"*(len(methods))+"}")
 res.append("\n\\toprule \n")
-res.append("Molecule ")
-res.append("".join([f" & {method_name_map[method]}" for method in methods])+"\\\\ \n\hline \n")
+res.append("Molecule & $n_H$")
+res.append("".join([f" & {method_name_map(method)}" for method in methods])+"\\\\ \n\hline \n")
 
-transforms = ["JW"]
+transforms = ["BK"]
 n_trans = len(transforms)
 for hamil in hamil_names:
     hamil_info = hamil.split("/")[-1].split("_")
@@ -53,22 +50,21 @@ for hamil in hamil_names:
     res.extend(["\\multirow{",str(n_trans),"}{*}{",f"{tex_hamil_name}({hamil_info[1]})","}","\n"])
     for i_trans in range(len(transforms)):
         transform = transforms[i_trans]
+        hamil_op = get_test_hamil("mol", hamil + "_" + transform)
+        res.append(f"& {len(hamil_op)} ")
         hamil = hamil.replace("/", "-")
         hamil_dict = res_dict.get(hamil+"_"+transform, {})
         print(hamil_dict)
         var_coeff_list = []
         for method in methods:
-            if method in hamil_dict:
-                var_coeff = hamil_dict[method]
+            key = str(math.ceil(len(hamil_op) / method))
+            if key in hamil_dict:
+                var_coeff = hamil_dict[key]
             else:
                 print(hamil)
-                print(method, "not in", hamil_dict)
+                print(key, "not in", hamil_dict)
                 var_coeff = -1
-            if var_coeff < 100:
-                var_coeff = "{:0.2f}".format(var_coeff)
-            else:
-                var_coeff = round(var_coeff)
-                var_coeff = "{}".format(var_coeff)
+            var_coeff = "{:0.2f}".format(var_coeff)
             var_coeff_list.append(var_coeff)
         min_coeff = min([float(x) for x in var_coeff_list])
         for var_coeff in var_coeff_list:
@@ -81,7 +77,7 @@ for hamil in hamil_names:
 
 
 res.append("""\\botrule\\end{tabular} 
-\\vartablecaptionOpt
+\\vartablecaptionBatch
 \\end{table}
 """)
 

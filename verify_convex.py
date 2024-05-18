@@ -1,7 +1,7 @@
-from mizore.operators.qubit_operator import QubitOperator
-from average_var import average_var_coeff_by_list_of_pwords
-from hamil import get_test_hamil
-from utils import project_root
+from composite_ms.average_var import average_var_coeff_by_list_of_pwords
+from composite_ms.hamil import get_test_hamil
+from composite_ms.qubit_operator import QubitOperator
+from composite_ms.utils import project_root
 import numpy as np
 
 def f(coeff1, coeff2, pauli_tensor, hamil):
