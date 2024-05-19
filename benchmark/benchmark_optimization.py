@@ -38,6 +38,8 @@ def main(hamil_name, settings):
             #print(args.alternate_training_ratio, args.alternate_training_n_steps)
 
         #res_in_cms_lbcs = train_cms_lbcs(n_head, hamil, len(hamil) // 80 + 1, args)
+        #args.random_init = True
+        #args.head_from_hamil = False
         res_in_cms_lbcs = train_cms_lbcs(n_head, hamil, 500, args)
         var_coeff = average_var_coeff_by_cms_lbcs(*res_in_cms_lbcs, hamil)
 
@@ -51,8 +53,7 @@ def main(hamil_name, settings):
 
 
 if __name__ == '__main__':
-    mol_list = ["LiH_12_JW","N2_20_JW", "C2H2_24_JW", "C2H4_28_JW", "CO2_30_JW"]
+    mol_list = ["NH3_16_JW", "H2O_14_BK","H6_12_JW", "LiH_12_JW","N2_20_JW", "C2H2_24_JW", "C2H4_28_JW", "CO2_30_JW"]
     settings = ["bi-level rescale", "bi-level", "rescale", "nothing"]
-    # mol_list = ["H_chain/H6_12_JW", "H_chain/H8_16_JW", "H_chain/H10_20_JW", "H_chain/H12_24_JW"]
     for hamil_name in mol_list[0:1]:
         main(hamil_name, settings[0:1])

@@ -11,24 +11,45 @@ if torch.cuda.is_available():
 # torch.manual_seed(3123)  # See https://arxiv.org/abs/2109.08203
 
 dtype = torch.float32
+p = 2
+
+
+def project_parameter(model, p):
+    with torch.no_grad():
+        model.heads = nn.Parameter(F.normalize(model.heads, p=p, dim=-1))
+        model.head_ratios = nn.Parameter(F.normalize(model.head_ratios, p=p, dim=0))
+        #model.head_ratios = nn.Parameter(F.relu(model.head_ratios))
+        #model.heads = nn.Parameter(F.relu(model.heads))
+        model.head_ratios = nn.Parameter(abs(model.head_ratios))
+        model.heads = nn.Parameter(abs(model.heads))
+        model.head_ratios += (0.001 / len(model.heads)) / 1.001
+        model.heads += (0.001 / len(model.heads)) / 1.001
+        model.head_ratios = nn.Parameter(F.normalize(model.head_ratios, p=p, dim=0))
+        model.heads = nn.Parameter(F.normalize(model.heads, p=p, dim=-1))
+
 
 class LargeLBCS(nn.Module):
-    def __init__(self, init_head_ratios, init_heads, freeze_heads = False):
+    def __init__(self, init_head_ratios, init_heads, freeze_heads=False):
         super(LargeLBCS, self).__init__()
         self.activator = torch.nn.Softplus()
         head_ratios = init_head_ratios
         heads = init_heads
-        self.heads = torch.nn.Parameter(heads, requires_grad=(not freeze_heads))
-        self.head_ratios = torch.nn.Parameter(head_ratios, requires_grad=True)
+        heads = F.normalize(heads, p=1.0, dim=-1)
+        head_ratios = F.normalize(head_ratios, p=1.0, dim=0)
+
+        self.p = p
+        self.heads = torch.nn.Parameter(heads ** (1 / p),
+                                        requires_grad=(not freeze_heads))
+        self.head_ratios = torch.nn.Parameter(head_ratios ** (1 / p), requires_grad=True)
         self.n_heads = len(heads)
+        project_parameter(self, p)
+
+        # print(sum(head_ratios))
+        # print()
 
     def get_heads_and_heads_ratio(self):
-        heads = self.activator(self.heads * 20)
-        heads = F.normalize(heads, p=1.0, dim=-1)
-        head_ratios = self.activator(self.head_ratios * 20)
-        # head_ratios = F.normalize(head_ratios, p=1.0, dim=0)
-        head_ratios = (F.normalize(head_ratios, p=1.0, dim=0) +
-                       (0.001 / self.n_heads)) / 1.001
+        heads = self.heads ** self.p
+        head_ratios = self.head_ratios ** self.p
         return heads, head_ratios
 
     def forward(self, batch_pauli_tensor, batch_coeff):
@@ -59,10 +80,11 @@ def loss(heads, head_ratios, no_zero_pauliwords, coeffs):
     var = torch.sum(1.0 / coverage * (coeffs ** 2))
     return var
 
+
 def get_variance_by_batches(heads, head_ratios, no_zero_pauliwords, coeffs, batch_size):
     loss_list = []
     batch_n = 0
-    #coeffs = torch.tensor(coeffs,)
+    # coeffs = torch.tensor(coeffs,)
     while True:
         batch_pauli_tensor = no_zero_pauliwords[batch_n:batch_n + batch_size]
         batch_coeffs = coeffs[batch_n:batch_n + batch_size]
@@ -90,7 +112,7 @@ class CMS_LBCS_args:
 
         self.logger = None
 
-        self.lr = 0.005
+        self.lr = 1e-3
         self.bilevel_ratio = 0.1
 
         self.head_from_args = False
@@ -100,7 +122,6 @@ class CMS_LBCS_args:
         self.verbose = True
 
         self.freeze_heads = False
-
 
         self.alternate_training_ratio = -1
         self.alternate_training_n_steps = -1
@@ -113,9 +134,7 @@ class CMS_LBCS_args:
         self.head_from_args = True
 
 
-
 def train_cms_lbcs(n_head, hamil, batch_size, args=None):
-
     if args == None:
         args = CMS_LBCS_args()
 
@@ -143,7 +162,9 @@ def train_cms_lbcs(n_head, hamil, batch_size, args=None):
     if args.head_from_hamil:
         term_rank = torch.argsort(coeffs, descending=True)
         head_ratios = coeffs[term_rank][:n_head]
+        head_ratios += torch.ones((n_head,), dtype=dtype) * 0.01
         heads = pauli_tensor[term_rank][:n_head]
+        heads += torch.ones((n_head, n_qubit, 3), dtype=dtype) * 0.01
 
     if args.head_from_args:
         print("Using initial value from args")
@@ -151,7 +172,7 @@ def train_cms_lbcs(n_head, hamil, batch_size, args=None):
         heads = torch.asarray(args.heads)
         assert len(head_ratios) == n_head or n_head == -1
 
-    model = LargeLBCS(head_ratios, heads, freeze_heads = args.freeze_heads).to(device)
+    model = LargeLBCS(head_ratios, heads, freeze_heads=args.freeze_heads).to(device)
 
     for name, param in model.named_parameters():
         if name == "heads":
@@ -163,7 +184,7 @@ def train_cms_lbcs(n_head, hamil, batch_size, args=None):
     lr_for_ratios = lr * args.bilevel_ratio
 
     optimizer = torch.optim.Adam([{"params": [heads_param], "lr": lr}, {"params": [
-                                 head_ratios_param], "lr": lr_for_ratios}], weight_decay=1e-5)
+        head_ratios_param], "lr": lr_for_ratios}], weight_decay=1e-5)
 
     n_epoch = 0
     batch_n = 0
@@ -187,6 +208,10 @@ def train_cms_lbcs(n_head, hamil, batch_size, args=None):
                     model.head_ratios.requires_grad = True
 
             optimizer.zero_grad()
+            # Manually zero the gradients
+            # model.heads.grad = None
+            # model.head_ratios.grad = None
+
             if batch_n == 0:
                 # Calculate the loss
                 total_loss = avg_loss_for_epoch
@@ -219,15 +244,27 @@ def train_cms_lbcs(n_head, hamil, batch_size, args=None):
             if heads_grad != None:
                 if args.rescale_head_grad:
                     heads_grad /= head_ratios.unsqueeze(-1).unsqueeze(-1)
-                
+
                 # This is for experiment
                 if args.normalize_grad:
                     heads_grad -= (torch.sum(heads_grad, dim=-1) / 3).unsqueeze(-1)
                     head_ratios_grad -= (torch.sum(head_ratios_grad,
-                                            dim=-1) / (n_head))
+                                                   dim=-1) / (n_head))
 
             # Update the parameters
-            optimizer.step()
+            # optimizer.step()
+            # project_parameter(model, p)
+
+            # Manually update the parameters
+            with torch.no_grad():
+                # print the norm of the gradient
+                # if torch.norm(head_ratios_grad) > torch.norm(model.head_ratios) * 10:
+                #    head_ratios_grad = head_ratios_grad / torch.norm(head_ratios_grad) * torch.norm(#model.head_ratios) * 10
+                # print(torch.norm(head_ratios_grad) , torch.norm(model.head_ratios))
+                model.head_ratios -= lr_for_ratios * (1+i_step)**(-0.9) * head_ratios_grad
+                # remove the negative values and set them to 0
+                model.heads -= lr * (1+i_step)**(-0.95) * heads_grad
+                project_parameter(model, p)
 
             batch_n += batch_size
             if batch_n >= n_pauliwords:
@@ -264,6 +301,7 @@ def train_cms_lbcs(n_head, hamil, batch_size, args=None):
 
 if __name__ == '__main__':
     from composite_ms.hamil import get_test_hamil
+
     mol_name = "H2O_26_JW"
     n_head = 1000
     hamil, _ = get_test_hamil("mol", mol_name).remove_constant()
