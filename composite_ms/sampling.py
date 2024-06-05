@@ -3,6 +3,9 @@ from numpy import ndarray
 
 
 def sample_pauli_strings(heads: ndarray, head_ratios: ndarray):
+    """
+    Return a list for a Pauli string. 0: X, 1: Y, 2: Z
+    """
     head_index =  np.random.choice(len(head_ratios), p=head_ratios)
     head = heads[head_index]
     pauli_at_qubits = []
