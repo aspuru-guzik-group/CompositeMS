@@ -26,9 +26,9 @@ class LargeLBCS(nn.Module):
         heads = self.activator(self.heads * 20)
         heads = F.normalize(heads, p=1.0, dim=-1)
         head_ratios = self.activator(self.head_ratios * 20)
-        # head_ratios = F.normalize(head_ratios, p=1.0, dim=0)
-        head_ratios = (F.normalize(head_ratios, p=1.0, dim=0) +
-                       (0.001 / self.n_heads)) / 1.001
+        # This is term is for keeping sub-scheme unfrozen
+        head_ratios += (0.001 / self.n_heads) / 1.001
+        head_ratios = F.normalize(head_ratios, p=1.0, dim=0)
         return heads, head_ratios
 
     def forward(self, batch_pauli_tensor, batch_coeff):
