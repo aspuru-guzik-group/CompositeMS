@@ -25,7 +25,7 @@ with open(result_root + "/time_used.json", "r") as f:
     res_dict = json.load(f)
 
 
-hamil_names = ["LiH_12", "H_chain/H6_12", "H2O_14", "NH3_16", "N2_20", "C2H2_24", "C2H4_28", "CO2_30"]
+hamil_names = ["LiH_12", "H2O_14", "NH3_16", "N2_20", "C2H2_24", "C2H4_28", "CO2_30"]
 methods = ["Time used (s)"]
 res = []
 res.append("\\begin{table}[!h]\\centering\n\\begin{tabular}")
@@ -39,23 +39,27 @@ n_trans = len(transforms)
 for hamil in hamil_names:
     hamil_key = hamil.replace("/", "-")
     hamil_info = hamil.split("/")[-1].split("_")
-    print(hamil_info)
+    #print(hamil_info)
     tex_hamil_name = to_tex_mol_name(hamil_info[0])
     res.extend(["\\multirow{",str(n_trans),"}{*}{",f"{tex_hamil_name}({hamil_info[1]})","}","\n"])
+    #hamil = get_test_hamil("mol", hamil_key + "_JW")
+    #print(len(hamil.terms))
     for i_trans in range(len(transforms)):
         transform = transforms[i_trans]
         res.append(f"& {transform} ")
         hamil_dict = res_dict.get(hamil_key+"_"+transform, {})
         var_coeff_list = []
         for method in methods:
-            var_coeff = hamil_dict["CMS"]
-            var_coeff_list.append(var_coeff)
-            if var_coeff < 100:
-                var_coeff = "{:0.1f}".format(var_coeff)
+            time_used = hamil_dict["CMS"]
+            var_coeff_list.append(time_used)
+            if time_used < 100:
+                time_used = "{:0.1f}".format(time_used)
             else:
-                var_coeff = round(var_coeff)
-                var_coeff = "{}".format(var_coeff)
-            res.append(f"& {var_coeff}")
+                time_used = round(time_used)
+                time_used = "{}".format(time_used)
+            res.append(f"& {time_used}")
+            if transform == "BK":
+                print(time_used)
         res.append("\\\\")
     res.append("\n\\hline \n")
 

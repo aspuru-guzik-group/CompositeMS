@@ -27,7 +27,7 @@ def run_part_of_benchmark(hamil_name, method_name, read_file=False):
     if read_file:
         if method_name in ["De", "SG"]:
             pword_dist = QubitOperator.read_op_file(hamil_name, method_folder)
-            # var_coeff = average_var_coeff_by_list_of_pwords(hamil, pword_dist)
+            # time_used = average_var_coeff_by_list_of_pwords(hamil, pword_dist)
             res_in_cms_lbcs = pword_dist.get_one_hot_tensor()
             remaining_hamil = get_uncovered_hamil_part(hamil, pword_dist)
             truncated_weight = remaining_hamil.get_l1_norm_omit_const()
@@ -121,7 +121,7 @@ def run_part_of_benchmark(hamil_name, method_name, read_file=False):
             a1, a2 = optimal_mixing_coeff(var_coeff, truncated_weight ** 2)
             var_coeff = var_coeff / a1 + (truncated_weight ** 2) / a2
 
-    print("var_coeff for", method_name, ":", var_coeff)
+    print("time_used for", method_name, ":", var_coeff)
 
     return var_coeff
 
