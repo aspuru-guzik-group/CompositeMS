@@ -4,7 +4,12 @@ torch
 torchvision
 torchaudio
 tqdm
-wget
 matplotlib
+
+# Optional dependencies for Hamiltonian generation
+# Install with: pip install openfermion openfermionpyscf pyscf
+openfermion>=1.5.0
+openfermionpyscf>=0.5
+pyscf>=2.0.0
 
 
